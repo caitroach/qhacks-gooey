@@ -20,7 +20,6 @@
 html, body { 
   height: 100%; 
   margin: 0; 
-  overflow: hidden;
 }
 
 ::-webkit-scrollbar {
@@ -36,6 +35,26 @@ html, body {
   border-radius: 4px;
 }
 
+.topbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+
+  padding: 10px;
+  position: sticky;
+  top: 0;
+
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.content {
+  overflow: auto; /* only the content scrolls */
+  padding: 10px;
+}
+
+
 body {
   background:
     radial-gradient(1000px 700px at 20% 10%, rgba(110,168,255,0.20), transparent 55%),
@@ -46,7 +65,10 @@ body {
   line-height: 1.45;
   font-size: var(--base-font);
   font-weight: 400;
-  display: flex;
+  display: grid;
+  grid-template: auto 1fr;
+  min-height: 100%;
+  overflow: hidden;
   align-items: flex-start;
   justify-content: center;
   padding: 20px;
@@ -141,7 +163,7 @@ body {
   gap: 14px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .sectionTitle {
@@ -270,7 +292,7 @@ body[data-listening="true"] .status {
   word-wrap: break-word;
   overflow-y: auto;
   flex: 1;
-  min-height: 60px;
+  min-height: 0;
   transition: font-size 0.2s ease, min-height 0.2s ease;
 }
 
@@ -287,6 +309,30 @@ body[data-listening="true"] .status {
   flex-wrap: wrap;
   flex-shrink: 0;
 }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+
+  /* NEW: keep it visible */
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+
+  /* NEW: give it a backing so text doesn't scroll behind it */
+  padding-top: 10px;
+  background: linear-gradient(
+    to bottom,
+    rgba(11,16,32,0),
+    rgba(11,16,32,0.85) 35%,
+    rgba(11,16,32,0.95)
+  );
+  backdrop-filter: blur(8px);
+}
+
 
 .secondary {
   min-height: 48px;
@@ -321,6 +367,7 @@ body[data-listening="true"] .status {
 body.isCompact {
   padding: 12px;
   font-size: 16px;
+  min-height: 0;
   align-items: stretch;
 }
 
