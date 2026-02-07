@@ -75,7 +75,6 @@ def main():
 
     api.bind_window(window)
 
-    # Start compact on launch
     def on_start():
         api.set_window_mode("compact")
 
