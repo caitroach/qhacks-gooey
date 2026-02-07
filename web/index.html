@@ -6,10 +6,11 @@
   <meta name="color-scheme" content="light dark" />
   <title>Willow</title>
   <link rel="stylesheet" href="styles.css" />
-  <script type="text/javascript" src="/eel.js"></script>
 </head>
 
 <body>
+  <a class="skipLink" href="#main">Skip to main content</a>
+
   <main id="main" class="shell" role="main">
     <header class="top" role="banner">
       <div class="brand">
@@ -21,23 +22,37 @@
       </div>
     </header>
 
-    <section class="card">
-      <h2 class="sectionTitle">Microphone status:</h2>
+    <section class="card" aria-labelledby="voiceTitle">
+      <h2 id="voiceTitle" class="sectionTitle">Microphone status:</h2>
 
       <div class="controls">
-        <button id="micBtn" class="mic" type="button">
-          <span class="micIcon">🎙️</span>
-          <span class="micText" id="micText">Muted</span>
+        <button
+          id="micBtn"
+          class="mic"
+          type="button"
+          aria-pressed="false"
+          aria-describedby="status help"
+        >
+          <span class="micIcon" aria-hidden="true">🎙️</span>
+          <span class="micText" id="micText">muted</span>
         </button>
 
         <p id="help" class="help">
-          Tip: Press <kbd>Enter</kbd> or <kbd>Space</kbd> to toggle
+          Tip: Press <kbd>Enter</kbd> or <kbd>Space</kbd> to toggle mute
         </p>
       </div>
 
-      <div class="status" id="status">Ready.</div>
+      <div
+        class="status"
+        id="status"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        Ready.
+      </div>
 
-      <div class="output">
+      <div class="output" aria-labelledby="outLabel">
         <div class="outputLabel" id="outLabel">Transcript</div>
         <p id="out" class="outText" tabindex="0">No speech detected yet.</p>
       </div>
@@ -52,8 +67,6 @@
   </main>
 
   <script>
-  console.log('🌅 Willow UI loaded!');
-  
   const micBtn = document.getElementById("micBtn");
   const micText = document.getElementById("micText");
   const statusEl = document.getElementById("status");
@@ -63,66 +76,81 @@
   const modeBtnText = document.getElementById("modeBtnText");
 
   let muted = true;
-  let currentMode = 'compact'; // source of truth (Python decides)
+  let mode = "compact";
 
-  // Check if Eel is available
-  function checkEel() {
-    if (typeof eel === 'undefined') {
-      console.warn('⚠️ Eel not loaded - running in browser mode');
-      return false;
+  function api() {
+    const a = window.pywebview?.api;
+    if (!a) {
+      // Fallback for testing in browser
+      return {
+        set_mute: async () => ({ ok: true }),
+        set_window_mode: async (m) => {
+          mode = m;
+          updateLayoutMode();
+          return { ok: true };
+        }
+      };
     }
-    console.log('✓ Eel API connected');
-    return true;
+    return a;
   }
 
-  const hasEel = checkEel();
-
-  // Exposed function for window resize (called from Python)
-  if (hasEel) {
-    eel.expose(window_resize);
+  async function applyMode(newMode) {
+    const result = await api().set_window_mode(newMode);
+    if (result.ok) {
+      mode = newMode;
+      updateLayoutMode();
+    }
   }
+
+  modeBtn.addEventListener("click", async () => {
+    const newMode = (mode === "compact") ? "full" : "compact";
+    await applyMode(newMode);
+  });
+
+  function updateLayoutMode() {
+    // Detect if we're in compact mode based on window size or mode variable
+    const compactNow = mode === "compact" || window.innerWidth < 520;
+    document.body.classList.toggle("isCompact", compactNow);
+    
+    // Update button text
+    modeBtnText.textContent = compactNow ? "Expand" : "Compact";
+  }
+
+  // Listen for window resize events
+  window.addEventListener("resize", updateLayoutMode);
   
-  function window_resize(width, height) {
-    console.log(`📐 Window resize requested: ${width}x${height}`);
-    // The window will resize automatically via Python/Eel
-    setTimeout(() => {
-      updateLayout();
-    }, 100);
-  }
+  // Initial layout check
+  updateLayoutMode();
 
-  // MIC BUTTON
   function renderMuteState() {
+    micBtn.setAttribute("aria-pressed", String(!muted));
+    document.body.toggleAttribute("data-listening", !muted);
+
     if (muted) {
       micText.textContent = "Muted";
       statusEl.textContent = "Microphone is off.";
       micBtn.classList.remove("live");
-      document.body.setAttribute('data-listening', 'false');
     } else {
       micText.textContent = "Listening";
       statusEl.textContent = "Listening...";
       micBtn.classList.add("live");
-      document.body.setAttribute('data-listening', 'true');
     }
   }
 
   async function toggleMute() {
-    console.log('🎙️ Toggle mute');
     muted = !muted;
     renderMuteState();
-    
-    if (hasEel) {
-      try {
-        const result = await eel.set_mute(muted)();
-        console.log('Mute result:', result);
-      } catch (err) {
-        console.error('Mute error:', err);
-      }
+    try {
+      await api().set_mute(muted);
+    } catch (err) {
+      console.error(err);
     }
   }
 
   micBtn.addEventListener("click", toggleMute);
 
   document.addEventListener("keydown", (e) => {
+    // Only toggle if the target isn't an input/textarea
     if ((e.key === "Enter" || e.key === " ") && 
         !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
       e.preventDefault();
@@ -130,94 +158,16 @@
     }
   });
 
-  // CLEAR BUTTON
   clearBtn.addEventListener("click", () => {
-    console.log('🗑️ Clear transcript');
     outEl.textContent = "No speech detected yet.";
     statusEl.textContent = muted
       ? "Transcript cleared. Microphone is off."
       : "Transcript cleared. Listening...";
-    
-    if (hasEel) {
-      eel.update_transcript("")();
-    }
+    outEl.focus();
   });
 
-  // MODE SWITCHING
-    function applyMode(mode) {
-    currentMode = (mode === 'full') ? 'full' : 'compact';
-    const isCompact = currentMode === 'compact';
-    document.body.classList.toggle('isCompact', isCompact);
-    modeBtnText.textContent = isCompact ? 'Expand' : 'Compact';
-    console.log(`🖼️ Mode applied: ${currentMode}`);
-  }
-
-  function updateLayout() {
-    applyMode(currentMode);
-  }
-
-    modeBtn.addEventListener('click', async () => {
-    console.log('🖱️ Mode button clicked');
-    if (modeBtn.disabled) return;
-    modeBtn.disabled = true;
-    modeBtn.style.opacity = '0.6';
-
-    try {
-      const isCompact = currentMode === 'compact';
-      if (hasEel) {
-        if (isCompact) {
-          console.log('📱 → 🖥️ Switching to full window');
-          await eel.switch_to_full()();
-        } else {
-          console.log('🖥️ → 📱 Switching to compact window');
-          await eel.switch_to_compact()();
-        }
-        const m = await eel.get_current_mode()();
-        applyMode(m && m.mode ? m.mode : (isCompact ? 'full' : 'compact'));
-      } else {
-        applyMode(isCompact ? 'full' : 'compact');
-      }
-    } catch (err) {
-      console.error('Mode switch error:', err);
-    } finally {
-      setTimeout(() => {
-        modeBtn.disabled = false;
-        modeBtn.style.opacity = '1';
-      }, 250);
-    }
-  });
-
-  // RESPONSIVE LAYOUT
-  window.addEventListener("resize", () => {
-    updateLayout();
-  });
-
-  // AUTO-UPDATE TRANSCRIPT (example - called from Python)
-  if (hasEel) {
-    eel.expose(update_ui_transcript);
-  }
-  
-  function update_ui_transcript(text) {
-    if (text && text.trim()) {
-      outEl.textContent = text;
-    }
-  }
-
-    // INITIALIZE
-  (async () => {
-    renderMuteState();
-    if (hasEel) {
-      try {
-        const m = await eel.get_current_mode()();
-        applyMode(m && m.mode ? m.mode : 'compact');
-      } catch (e) {
-        applyMode('compact');
-      }
-    } else {
-      applyMode('compact');
-    }
-    console.log('✅ Ready!');
-  })();
+  // Initialize
+  renderMuteState();
   </script>
 </body>
 </html>
