@@ -1,4 +1,4 @@
-<!doctype html>
+!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -9,8 +9,6 @@
 </head>
 
 <body>
-  <a class="skipLink" href="#main">Skip to main content</a>
-
   <main id="main" class="shell" role="main">
     <header class="top" role="banner">
       <div class="brand">
@@ -22,43 +20,32 @@
       </div>
     </header>
 
-    <section class="card" aria-labelledby="voiceTitle">
-      <h2 id="voiceTitle" class="sectionTitle">Microphone status:</h2>
+    <section class="card">
+      <h2 class="sectionTitle">Microphone status:</h2>
 
       <div class="controls">
-        <button
-          id="micBtn"
-          class="mic"
-          type="button"
-          aria-pressed="false"
-          aria-describedby="status help"
-        >
-          <span class="micIcon" aria-hidden="true">🎙️</span>
-          <span class="micText" id="micText">muted</span>
+        <button id="micBtn" class="mic" type="button">
+          <span class="micIcon">🎙️</span>
+          <span class="micText" id="micText">Muted</span>
         </button>
 
         <p id="help" class="help">
-          Tip: Press <kbd>Enter</kbd> or <kbd>Space</kbd> to toggle mute
+          Tip: Press <kbd>Enter</kbd> or <kbd>Space</kbd> to toggle
         </p>
       </div>
 
-      <div
-        class="status"
-        id="status"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        Ready.
-      </div>
+      <div class="status" id="status">Ready.</div>
 
-      <div class="output" aria-labelledby="outLabel">
+      <div class="output">
         <div class="outputLabel" id="outLabel">Transcript</div>
         <p id="out" class="outText" tabindex="0">No speech detected yet.</p>
       </div>
 
       <div class="actions">
         <button id="clearBtn" class="secondary" type="button">Clear</button>
+        <button id="modeBtn" class="secondary" type="button">
+          <span id="modeBtnText">Expand</span>
+        </button>
       </div>
     </section>
   </main>
@@ -71,17 +58,25 @@
   const statusEl = document.getElementById("status");
   const outEl = document.getElementById("out");
   const clearBtn = document.getElementById("clearBtn");
+  const modeBtn = document.getElementById("modeBtn");
+  const modeBtnText = document.getElementById("modeBtnText");
 
   let muted = true;
+  let mode = "compact";
+  let isResizing = false;
 
   function api() {
     const a = window.pywebview?.api;
     if (!a) {
-      console.warn('No pywebview API found - running in browser mode');
+      console.warn('⚠️ No pywebview API - browser mode');
       return {
         set_mute: async (m) => {
           console.log('Mock set_mute:', m);
           return { ok: true };
+        },
+        set_window_mode: async (m) => {
+          console.log('Mock set_window_mode:', m);
+          return { ok: true, mode: m };
         }
       };
     }
@@ -89,12 +84,8 @@
     return a;
   }
 
-  // Mic button functionality
+  // MIC BUTTON
   function renderMuteState() {
-    console.log('Rendering mute state:', muted);
-    micBtn.setAttribute("aria-pressed", String(!muted));
-    document.body.toggleAttribute("data-listening", !muted);
-
     if (muted) {
       micText.textContent = "Muted";
       statusEl.textContent = "Microphone is off.";
@@ -107,67 +98,117 @@
   }
 
   async function toggleMute() {
-    console.log('Toggle mute clicked');
+    console.log('🎙️ Toggle mute');
     muted = !muted;
     renderMuteState();
     try {
-      const result = await api().set_mute(muted);
-      console.log('Mute API result:', result);
+      await api().set_mute(muted);
     } catch (err) {
       console.error('Mute error:', err);
     }
   }
 
-  micBtn.addEventListener("click", (e) => {
-    console.log('Mic button clicked!');
-    toggleMute();
-  });
+  micBtn.addEventListener("click", toggleMute);
 
   document.addEventListener("keydown", (e) => {
     if ((e.key === "Enter" || e.key === " ") && 
         !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
       e.preventDefault();
-      console.log('Keyboard shortcut triggered');
       toggleMute();
     }
   });
 
-  // Clear button functionality
+  // CLEAR BUTTON
   clearBtn.addEventListener("click", () => {
-    console.log('Clear button clicked');
+    console.log('🗑️ Clear transcript');
     outEl.textContent = "No speech detected yet.";
     statusEl.textContent = muted
       ? "Transcript cleared. Microphone is off."
       : "Transcript cleared. Listening...";
-    outEl.focus();
   });
 
-  // Responsive layout based on window size
+  // MODE SWITCHING (Windows-friendly)
   function updateLayoutMode() {
     const isSmall = window.innerWidth < 520 || window.innerHeight < 420;
-    console.log('Layout check:', { width: window.innerWidth, height: window.innerHeight, isSmall });
-    document.body.classList.toggle("isCompact", isSmall);
+    const compactNow = mode === "compact" || isSmall;
+    
+    document.body.classList.toggle("isCompact", compactNow);
+    
+    if (modeBtnText) {
+      modeBtnText.textContent = compactNow ? "Expand" : "Compact";
+    }
   }
 
-  // Window resize handling
+  async function switchMode(newMode) {
+    if (isResizing) return;
+    isResizing = true;
+    
+    console.log('🔄 Switching to:', newMode);
+    
+    try {
+      const result = await api().set_window_mode(newMode);
+      
+      if (result && result.ok) {
+        mode = newMode;
+        
+        // On Windows, manually resize using window.resizeTo
+        if (window.pywebview && result.w && result.h) {
+          try {
+            window.resizeTo(result.w, result.h);
+          } catch (e) {
+            console.log('Manual resize not available, using CSS only');
+          }
+        }
+        
+        setTimeout(() => {
+          updateLayoutMode();
+          isResizing = false;
+        }, 100);
+      } else {
+        console.error('Mode switch failed:', result?.error);
+        isResizing = false;
+      }
+    } catch (err) {
+      console.error('Mode switch error:', err);
+      isResizing = false;
+    }
+  }
+
+  modeBtn.addEventListener("click", async () => {
+    console.log('🖱️ Mode button clicked');
+    
+    if (modeBtn.disabled || isResizing) {
+      return;
+    }
+    
+    const newMode = (mode === "compact") ? "full" : "compact";
+    
+    modeBtn.disabled = true;
+    modeBtn.style.opacity = "0.6";
+    
+    await switchMode(newMode);
+    
+    setTimeout(() => {
+      modeBtn.disabled = false;
+      modeBtn.style.opacity = "1";
+    }, 300);
+  });
+
+  // RESPONSIVE LAYOUT
   let resizeTimer;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      console.log('Window resized:', window.innerWidth, 'x', window.innerHeight);
+      console.log('📐 Window resized:', window.innerWidth, 'x', window.innerHeight);
       updateLayoutMode();
     }, 100);
   });
 
-  // Initialize
-  console.log('Initializing UI...');
+  // INITIALIZE
   renderMuteState();
-  setTimeout(() => {
-    console.log('Initial layout update');
-    updateLayoutMode();
-  }, 200);
+  setTimeout(updateLayoutMode, 200);
   
-  console.log('✅ All event listeners attached!');
+  console.log('✅ Ready!');
   </script>
 </body>
 </html>
