@@ -1,4 +1,4 @@
-!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -62,8 +62,7 @@
   const modeBtnText = document.getElementById("modeBtnText");
 
   let muted = true;
-  let mode = "compact";
-  let isResizing = false;
+  let isCompactWindow = window.innerWidth < 520;
 
   function api() {
     const a = window.pywebview?.api;
@@ -74,9 +73,13 @@
           console.log('Mock set_mute:', m);
           return { ok: true };
         },
-        set_window_mode: async (m) => {
-          console.log('Mock set_window_mode:', m);
-          return { ok: true, mode: m };
+        switch_to_full: async () => {
+          console.log('Mock switch_to_full');
+          return { ok: true };
+        },
+        switch_to_compact: async () => {
+          console.log('Mock switch_to_compact');
+          return { ok: true };
         }
       };
     }
@@ -127,86 +130,49 @@
       : "Transcript cleared. Listening...";
   });
 
-  // MODE SWITCHING (Windows-friendly)
-  function updateLayoutMode() {
-    const isSmall = window.innerWidth < 520 || window.innerHeight < 420;
-    const compactNow = mode === "compact" || isSmall;
-    
-    document.body.classList.toggle("isCompact", compactNow);
-    
-    if (modeBtnText) {
-      modeBtnText.textContent = compactNow ? "Expand" : "Compact";
-    }
-  }
-
-  async function switchMode(newMode) {
-    if (isResizing) return;
-    isResizing = true;
-    
-    console.log('🔄 Switching to:', newMode);
-    
-    try {
-      const result = await api().set_window_mode(newMode);
-      
-      if (result && result.ok) {
-        mode = newMode;
-        
-        // On Windows, manually resize using window.resizeTo
-        if (window.pywebview && result.w && result.h) {
-          try {
-            window.resizeTo(result.w, result.h);
-          } catch (e) {
-            console.log('Manual resize not available, using CSS only');
-          }
-        }
-        
-        setTimeout(() => {
-          updateLayoutMode();
-          isResizing = false;
-        }, 100);
-      } else {
-        console.error('Mode switch failed:', result?.error);
-        isResizing = false;
-      }
-    } catch (err) {
-      console.error('Mode switch error:', err);
-      isResizing = false;
-    }
+  // MODE SWITCHING (two-window approach)
+  function updateLayout() {
+    isCompactWindow = window.innerWidth < 520;
+    document.body.classList.toggle("isCompact", isCompactWindow);
+    modeBtnText.textContent = isCompactWindow ? "Expand" : "Compact";
   }
 
   modeBtn.addEventListener("click", async () => {
     console.log('🖱️ Mode button clicked');
     
-    if (modeBtn.disabled || isResizing) {
-      return;
-    }
-    
-    const newMode = (mode === "compact") ? "full" : "compact";
+    if (modeBtn.disabled) return;
     
     modeBtn.disabled = true;
     modeBtn.style.opacity = "0.6";
     
-    await switchMode(newMode);
-    
-    setTimeout(() => {
-      modeBtn.disabled = false;
-      modeBtn.style.opacity = "1";
-    }, 300);
+    try {
+      if (isCompactWindow) {
+        // Switch to full window
+        console.log('📱 → 🖥️ Switching to full window');
+        await api().switch_to_full();
+      } else {
+        // Switch to compact window
+        console.log('🖥️ → 📱 Switching to compact window');
+        await api().switch_to_compact();
+      }
+    } catch (err) {
+      console.error('Mode switch error:', err);
+    } finally {
+      setTimeout(() => {
+        modeBtn.disabled = false;
+        modeBtn.style.opacity = "1";
+      }, 300);
+    }
   });
 
   // RESPONSIVE LAYOUT
-  let resizeTimer;
   window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      console.log('📐 Window resized:', window.innerWidth, 'x', window.innerHeight);
-      updateLayoutMode();
-    }, 100);
+    updateLayout();
   });
 
   // INITIALIZE
   renderMuteState();
-  setTimeout(updateLayoutMode, 200);
+  updateLayout();
   
   console.log('✅ Ready!');
   </script>
