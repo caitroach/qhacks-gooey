@@ -59,70 +59,39 @@
 
       <div class="actions">
         <button id="clearBtn" class="secondary" type="button">Clear</button>
-        <button id="modeBtn" class="secondary" type="button">
-          <span id="modeBtnText">Expand</span>
-        </button>
       </div>
     </section>
   </main>
 
   <script>
+  console.log('🌅 Willow UI loaded!');
+  
   const micBtn = document.getElementById("micBtn");
   const micText = document.getElementById("micText");
   const statusEl = document.getElementById("status");
   const outEl = document.getElementById("out");
   const clearBtn = document.getElementById("clearBtn");
-  const modeBtn = document.getElementById("modeBtn");
-  const modeBtnText = document.getElementById("modeBtnText");
 
   let muted = true;
-  let mode = "compact";
 
   function api() {
     const a = window.pywebview?.api;
     if (!a) {
-      // Fallback for testing in browser
+      console.warn('No pywebview API found - running in browser mode');
       return {
-        set_mute: async () => ({ ok: true }),
-        set_window_mode: async (m) => {
-          mode = m;
-          updateLayoutMode();
+        set_mute: async (m) => {
+          console.log('Mock set_mute:', m);
           return { ok: true };
         }
       };
     }
+    console.log('✓ PyWebView API connected');
     return a;
   }
 
-  async function applyMode(newMode) {
-    const result = await api().set_window_mode(newMode);
-    if (result.ok) {
-      mode = newMode;
-      updateLayoutMode();
-    }
-  }
-
-  modeBtn.addEventListener("click", async () => {
-    const newMode = (mode === "compact") ? "full" : "compact";
-    await applyMode(newMode);
-  });
-
-  function updateLayoutMode() {
-    // Detect if we're in compact mode based on window size or mode variable
-    const compactNow = mode === "compact" || window.innerWidth < 520;
-    document.body.classList.toggle("isCompact", compactNow);
-    
-    // Update button text
-    modeBtnText.textContent = compactNow ? "Expand" : "Compact";
-  }
-
-  // Listen for window resize events
-  window.addEventListener("resize", updateLayoutMode);
-  
-  // Initial layout check
-  updateLayoutMode();
-
+  // Mic button functionality
   function renderMuteState() {
+    console.log('Rendering mute state:', muted);
     micBtn.setAttribute("aria-pressed", String(!muted));
     document.body.toggleAttribute("data-listening", !muted);
 
@@ -138,27 +107,34 @@
   }
 
   async function toggleMute() {
+    console.log('Toggle mute clicked');
     muted = !muted;
     renderMuteState();
     try {
-      await api().set_mute(muted);
+      const result = await api().set_mute(muted);
+      console.log('Mute API result:', result);
     } catch (err) {
-      console.error(err);
+      console.error('Mute error:', err);
     }
   }
 
-  micBtn.addEventListener("click", toggleMute);
+  micBtn.addEventListener("click", (e) => {
+    console.log('Mic button clicked!');
+    toggleMute();
+  });
 
   document.addEventListener("keydown", (e) => {
-    // Only toggle if the target isn't an input/textarea
     if ((e.key === "Enter" || e.key === " ") && 
         !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
       e.preventDefault();
+      console.log('Keyboard shortcut triggered');
       toggleMute();
     }
   });
 
+  // Clear button functionality
   clearBtn.addEventListener("click", () => {
+    console.log('Clear button clicked');
     outEl.textContent = "No speech detected yet.";
     statusEl.textContent = muted
       ? "Transcript cleared. Microphone is off."
@@ -166,8 +142,32 @@
     outEl.focus();
   });
 
+  // Responsive layout based on window size
+  function updateLayoutMode() {
+    const isSmall = window.innerWidth < 520 || window.innerHeight < 420;
+    console.log('Layout check:', { width: window.innerWidth, height: window.innerHeight, isSmall });
+    document.body.classList.toggle("isCompact", isSmall);
+  }
+
+  // Window resize handling
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      console.log('Window resized:', window.innerWidth, 'x', window.innerHeight);
+      updateLayoutMode();
+    }, 100);
+  });
+
   // Initialize
+  console.log('Initializing UI...');
   renderMuteState();
+  setTimeout(() => {
+    console.log('Initial layout update');
+    updateLayoutMode();
+  }, 200);
+  
+  console.log('✅ All event listeners attached!');
   </script>
 </body>
 </html>

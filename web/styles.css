@@ -50,6 +50,7 @@ body {
   align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  transition: padding 0.2s ease;
 }
 
 .skipLink {
@@ -107,6 +108,7 @@ body {
   border: 1px solid var(--border);
   box-shadow: 0 10px 26px rgba(0,0,0,0.30);
   font-size: 28px;
+  transition: width 0.2s ease, height 0.2s ease, font-size 0.2s ease;
 }
 
 .brandText { 
@@ -118,12 +120,14 @@ body {
   font-size: 32px;
   letter-spacing: 0.2px;
   font-weight: 700;
+  transition: font-size 0.2s ease, margin 0.2s ease;
 }
 
 .subtitle {
   margin: 0;
   color: var(--muted);
   font-size: 16px;
+  transition: opacity 0.2s ease;
 }
 
 .card {
@@ -170,10 +174,14 @@ body {
   font-size: 20px;
   font-weight: 800;
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, filter 120ms ease;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, 
+              filter 120ms ease, min-height 0.2s ease, padding 0.2s ease, font-size 0.2s ease;
 }
 
-.micIcon { font-size: 28px; }
+.micIcon { 
+  font-size: 28px;
+  transition: font-size 0.2s ease;
+}
 
 .mic:hover {
   filter: brightness(1.02);
@@ -207,6 +215,7 @@ body {
   color: var(--muted);
   font-size: 14px;
   flex-shrink: 0;
+  transition: opacity 0.2s ease, height 0.2s ease;
 }
 
 kbd {
@@ -252,6 +261,7 @@ body[data-listening="true"] .status {
   font-size: 14px;
   font-weight: 700;
   flex-shrink: 0;
+  transition: opacity 0.2s ease, height 0.2s ease;
 }
 
 .outText {
@@ -261,6 +271,7 @@ body[data-listening="true"] .status {
   overflow-y: auto;
   flex: 1;
   min-height: 60px;
+  transition: font-size 0.2s ease, min-height 0.2s ease;
 }
 
 .outText:focus-visible {
@@ -287,7 +298,8 @@ body[data-listening="true"] .status {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: filter 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+  transition: filter 120ms ease, box-shadow 120ms ease, border-color 120ms ease, 
+              min-height 0.2s ease, padding 0.2s ease, font-size 0.2s ease;
 }
 
 .secondary:hover {
@@ -338,7 +350,9 @@ body.isCompact .title {
 }
 
 body.isCompact .subtitle {
-  display: none;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 body.isCompact .card {
@@ -362,7 +376,9 @@ body.isCompact .micIcon {
 }
 
 body.isCompact .help {
-  display: none;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 body.isCompact .status {
@@ -377,7 +393,9 @@ body.isCompact .output {
 }
 
 body.isCompact .outputLabel {
-  display: none;
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 body.isCompact .outText {
@@ -399,8 +417,12 @@ body.isCompact .secondary {
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * { 
-    transition: none !important; 
     animation: none !important; 
+  }
+  /* Keep layout transitions for usability, but make them instant */
+  body, .title, .subtitle, .logo, .mic, .micIcon, 
+  .help, .outputLabel, .outText, .secondary {
+    transition-duration: 0.05s !important;
   }
 }
 
