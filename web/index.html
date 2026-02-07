@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light dark" />
   <title>Willow</title>
   <link rel="stylesheet" href="styles.css" />
+  <script type="text/javascript" src="/eel.js"></script>
 </head>
 
 <body>
@@ -62,29 +63,31 @@
   const modeBtnText = document.getElementById("modeBtnText");
 
   let muted = true;
-  let isCompactWindow = window.innerWidth < 520;
+  let currentMode = 'compact'; // source of truth (Python decides)
 
-  function api() {
-    const a = window.pywebview?.api;
-    if (!a) {
-      console.warn('⚠️ No pywebview API - browser mode');
-      return {
-        set_mute: async (m) => {
-          console.log('Mock set_mute:', m);
-          return { ok: true };
-        },
-        switch_to_full: async () => {
-          console.log('Mock switch_to_full');
-          return { ok: true };
-        },
-        switch_to_compact: async () => {
-          console.log('Mock switch_to_compact');
-          return { ok: true };
-        }
-      };
+  // Check if Eel is available
+  function checkEel() {
+    if (typeof eel === 'undefined') {
+      console.warn('⚠️ Eel not loaded - running in browser mode');
+      return false;
     }
-    console.log('✓ PyWebView API connected');
-    return a;
+    console.log('✓ Eel API connected');
+    return true;
+  }
+
+  const hasEel = checkEel();
+
+  // Exposed function for window resize (called from Python)
+  if (hasEel) {
+    eel.expose(window_resize);
+  }
+  
+  function window_resize(width, height) {
+    console.log(`📐 Window resize requested: ${width}x${height}`);
+    // The window will resize automatically via Python/Eel
+    setTimeout(() => {
+      updateLayout();
+    }, 100);
   }
 
   // MIC BUTTON
@@ -93,10 +96,12 @@
       micText.textContent = "Muted";
       statusEl.textContent = "Microphone is off.";
       micBtn.classList.remove("live");
+      document.body.setAttribute('data-listening', 'false');
     } else {
       micText.textContent = "Listening";
       statusEl.textContent = "Listening...";
       micBtn.classList.add("live");
+      document.body.setAttribute('data-listening', 'true');
     }
   }
 
@@ -104,10 +109,14 @@
     console.log('🎙️ Toggle mute');
     muted = !muted;
     renderMuteState();
-    try {
-      await api().set_mute(muted);
-    } catch (err) {
-      console.error('Mute error:', err);
+    
+    if (hasEel) {
+      try {
+        const result = await eel.set_mute(muted)();
+        console.log('Mute result:', result);
+      } catch (err) {
+        console.error('Mute error:', err);
+      }
     }
   }
 
@@ -128,40 +137,53 @@
     statusEl.textContent = muted
       ? "Transcript cleared. Microphone is off."
       : "Transcript cleared. Listening...";
+    
+    if (hasEel) {
+      eel.update_transcript("")();
+    }
   });
 
-  // MODE SWITCHING (two-window approach)
-  function updateLayout() {
-    isCompactWindow = window.innerWidth < 520;
-    document.body.classList.toggle("isCompact", isCompactWindow);
-    modeBtnText.textContent = isCompactWindow ? "Expand" : "Compact";
+  // MODE SWITCHING
+    function applyMode(mode) {
+    currentMode = (mode === 'full') ? 'full' : 'compact';
+    const isCompact = currentMode === 'compact';
+    document.body.classList.toggle('isCompact', isCompact);
+    modeBtnText.textContent = isCompact ? 'Expand' : 'Compact';
+    console.log(`🖼️ Mode applied: ${currentMode}`);
   }
 
-  modeBtn.addEventListener("click", async () => {
+  function updateLayout() {
+    applyMode(currentMode);
+  }
+
+    modeBtn.addEventListener('click', async () => {
     console.log('🖱️ Mode button clicked');
-    
     if (modeBtn.disabled) return;
-    
     modeBtn.disabled = true;
-    modeBtn.style.opacity = "0.6";
-    
+    modeBtn.style.opacity = '0.6';
+
     try {
-      if (isCompactWindow) {
-        // Switch to full window
-        console.log('📱 → 🖥️ Switching to full window');
-        await api().switch_to_full();
+      const isCompact = currentMode === 'compact';
+      if (hasEel) {
+        if (isCompact) {
+          console.log('📱 → 🖥️ Switching to full window');
+          await eel.switch_to_full()();
+        } else {
+          console.log('🖥️ → 📱 Switching to compact window');
+          await eel.switch_to_compact()();
+        }
+        const m = await eel.get_current_mode()();
+        applyMode(m && m.mode ? m.mode : (isCompact ? 'full' : 'compact'));
       } else {
-        // Switch to compact window
-        console.log('🖥️ → 📱 Switching to compact window');
-        await api().switch_to_compact();
+        applyMode(isCompact ? 'full' : 'compact');
       }
     } catch (err) {
       console.error('Mode switch error:', err);
     } finally {
       setTimeout(() => {
         modeBtn.disabled = false;
-        modeBtn.style.opacity = "1";
-      }, 300);
+        modeBtn.style.opacity = '1';
+      }, 250);
     }
   });
 
@@ -170,11 +192,32 @@
     updateLayout();
   });
 
-  // INITIALIZE
-  renderMuteState();
-  updateLayout();
+  // AUTO-UPDATE TRANSCRIPT (example - called from Python)
+  if (hasEel) {
+    eel.expose(update_ui_transcript);
+  }
   
-  console.log('✅ Ready!');
+  function update_ui_transcript(text) {
+    if (text && text.trim()) {
+      outEl.textContent = text;
+    }
+  }
+
+    // INITIALIZE
+  (async () => {
+    renderMuteState();
+    if (hasEel) {
+      try {
+        const m = await eel.get_current_mode()();
+        applyMode(m && m.mode ? m.mode : 'compact');
+      } catch (e) {
+        applyMode('compact');
+      }
+    } else {
+      applyMode('compact');
+    }
+    console.log('✅ Ready!');
+  })();
   </script>
 </body>
 </html>
