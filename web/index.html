@@ -64,8 +64,8 @@
           <span>Clear</span>
         </button>
         <button id="modeBtn" class="secondary" type="button">
-          <span class="btnIcon">⛶</span>
-          <span id="modeBtnText">Expand</span>
+          <span class="btnIcon">❗</span>
+          <span id="modeBtnText">Help</span>
         </button>
       </div>
     </section>
@@ -117,16 +117,17 @@
     
     const btnIcon = modeBtn.querySelector('.btnIcon');
     if (compactNow) {
-      modeBtnText.textContent = "Expand";
-      if (btnIcon) btnIcon.textContent = "⛶";
+      modeBtnText.textContent = "Help";
+      if (btnIcon) btnIcon.textContent = "❗";
     } else {
-      modeBtnText.textContent = "Compact";
-      if (btnIcon) btnIcon.textContent = "⛶";
+      modeBtnText.textContent = "Help";
+      if (btnIcon) btnIcon.textContent = "❗";
     }
   }
 
   window.addEventListener("resize", updateLayoutMode);
   
+  // Initial layout check
   updateLayoutMode();
 
   function renderMuteState() {
@@ -155,6 +156,7 @@
   micBtn.addEventListener("click", toggleMute);
 
   document.addEventListener("keydown", (e) => {
+    // Only toggle if the target isn't an input/textarea
     if ((e.key === "Enter" || e.key === " ") && 
         !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
       e.preventDefault();
@@ -170,6 +172,7 @@
     outEl.focus();
   });
 
+  // Initialize
   renderMuteState();
   </script>
 </body>

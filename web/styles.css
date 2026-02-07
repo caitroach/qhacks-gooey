@@ -1,30 +1,33 @@
 :root {
-  --bg: #f5f7fa;
-  --surface: rgba(255, 255, 255, 0.8);
-  --surface2: rgba(255, 255, 255, 0.95);
+  /* Warm neutral base */
+  --bg: #fdf2db;
+  --surface: rgba(255, 249, 228, 0.78);
+  --surface2: rgba(255, 252, 244, 0.92);
+  --border: rgba(255, 237, 206, 0.1);
 
-  --text: #1a1d23;
-  --muted: #5f6368;
+  --text: #2f2a25;
+  --muted: #7a7167;
 
-  --border: rgba(0, 0, 0, 0.08);
+  /* Honey accent (slightly less neon, more “linen + caramel”) */
+  --accent: #d1c37c;
+  --accentDark: #b7935f;
+  --accentGlow: rgba(209, 176, 124, 0.30);
 
-  --shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.08),
-    0 2px 6px rgba(0, 0, 0, 0.04);
-
-  --accent: #ffb703;
-  --accentGlow: rgba(255, 183, 3, 0.25);
-  --accentDark: #e5a503;
-
-  --blue: #4285f4;
-  --blueGlow: rgba(66, 133, 244, 0.25);
+  /* A deeper “brand ink” for headings (replaces that random #937b57) */
+  --brand: #8b7353;
+  --brand_evil: #6a583f;
 
   --radius: 18px;
   --base-font: 20px;
   --tap: 72px;
   --ring: 4px;
   --maxw: 760px;
+
+  --shadow:
+    0 8px 24px rgba(47, 42, 37, 0.06),
+    0 1px 4px rgba(47, 42, 37, 0.04);
 }
+
 
 * { 
   box-sizing: border-box; 
@@ -56,11 +59,19 @@ html, body {
 
 body {
   background:
-    radial-gradient(1000px 700px at 20% 10%, rgba(66, 133, 244, 0.08), transparent 55%),
-    radial-gradient(900px 650px at 80% 20%, rgba(255, 183, 3, 0.06), transparent 60%),
+    radial-gradient(1000px 700px at 20% 10%, rgba(209, 176, 124, 0.18), transparent 55%),
+    radial-gradient(900px 650px at 80% 20%, rgba(183, 147, 95, 0.14), transparent 60%),
     var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+  ui-sans-serif,
+  system-ui,
+  -apple-system,
+  "Segoe UI",
+  Roboto,
+  Helvetica,
+  Arial,
+  sans-serif;
   line-height: 1.5;
   font-size: var(--base-font);
   font-weight: 400;
@@ -146,7 +157,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent, rgba(66, 133, 244, 0.08));
+  background: linear-gradient(135deg, transparent, rgba(209, 176, 124, 0.14));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -173,8 +184,9 @@ body {
 .brandText {
   text-align: left;
   max-width: 420px;
+  display: flex;
+  flex-direction: column;
 }
-
 
 .title {
   margin: 0;
@@ -182,7 +194,7 @@ body {
   font-weight: 1000;
   line-height: 1.1;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #1a1d23, #3c4043);
+  background:#937b57;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -307,13 +319,14 @@ body {
 }
 
 .mic.live {
-  background: linear-gradient(135deg, #4285f4, #1967d2);
-  border-color: var(--blue);
-  box-shadow: 
-    0 0 0 4px var(--blueGlow), 
-    0 12px 40px rgba(66, 133, 244, 0.4),
-    0 0 60px rgba(66, 133, 244, 0.3);
-  animation: pulse 2s ease-in-out infinite;
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    var(--accentDark)
+  );
+  box-shadow:
+    0 0 0 3px var(--accentGlow),
+    0 10px 28px rgba(0, 0, 0, 0.12);
 }
 
 .mic.live .micIcon {
@@ -325,14 +338,14 @@ body {
   0%, 100% { 
     box-shadow: 
       0 0 0 4px var(--blueGlow), 
-      0 12px 40px rgba(66, 133, 244, 0.4),
-      0 0 60px rgba(66, 133, 244, 0.3);
+      0 12px 40px rgba(244, 211, 66, 0.4),
+      0 0 60px rgba(244, 214, 66, 0.3);
   }
   50% { 
     box-shadow: 
       0 0 0 8px var(--blueGlow), 
-      0 16px 48px rgba(66, 133, 244, 0.5),
-      0 0 80px rgba(66, 133, 244, 0.4);
+      0 16px 48px rgba(244, 226, 66, 0.5),
+      0 0 80px rgba(244, 226, 66, 0.4);
   }
 }
 
