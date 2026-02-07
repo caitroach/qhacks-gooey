@@ -1,0 +1,7 @@
+socket
+eel
+pyautogui
+scrot
+python3-tkinter
+python3-devel
+python3-xlib

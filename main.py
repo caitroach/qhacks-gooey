@@ -1,48 +1,85 @@
-import socket
-import eel
+import tkinter as tk
+import webview
 
 APP_TITLE = "Willow"
 
-def pick_port(preferred=8001):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.2)
-        if s.connect_ex(("127.0.0.1", preferred)) != 0:
-            return preferred
+COMPACT = (420, 380)  # Increased height slightly for better fit
+FULL = (900, 650)
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+def screen_size():
+    root = tk.Tk()
+    root.withdraw()
+    w = root.winfo_screenwidth()
+    h = root.winfo_screenheight()
+    root.destroy()
+    return w, h
 
-eel.init("web")
+def bottom_right_pos(win_w: int, win_h: int, margin: int = 16, taskbar_fudge: int = 80):
+    sw, sh = screen_size()
+    x = max(0, sw - win_w - margin)
+    y = max(0, sh - win_h - margin - taskbar_fudge)
+    return x, y
 
-@eel.expose
-def hello():
-    return "Connected to Python."
+class Api:
+    def __init__(self):
+        self.window = None
+        self.muted = True
+        self.current_mode = "compact"
 
-@eel.expose
-def listen():
-    # TODO: replace with real speech-to-text
-    return "---"
+    def bind_window(self, window: webview.Window):
+        self.window = window
 
-MIC_MUTED = True
+    def set_mute(self, muted: bool):
+        self.muted = bool(muted)
+        # TODO: hook into your real mic logic
+        return {"ok": True, "muted": self.muted}
 
-@eel.expose
-def set_mute(is_live: bool):
-    global MIC_MUTED
-    MIC_MUTED = not is_live
-    print("Mic muted:", MIC_MUTED)
+    def set_window_mode(self, mode: str):
+        if not self.window:
+            return {"ok": False, "error": "Window not bound yet"}
 
+        if mode == "full":
+            w, h = FULL
+        else:
+            w, h = COMPACT
 
-def start():
-    port = pick_port(8001)
-    size = (980, 720)
+        x, y = bottom_right_pos(w, h)
 
-    eel.start(
-        "index.html",
-        size=size,
-        port=port,
-        block=True
+        # Native resize/move (reliable)
+        self.window.resize(w, h)
+        self.window.move(x, y)
+        self.current_mode = mode
+        
+        return {"ok": True, "mode": mode, "w": w, "h": h, "x": x, "y": y}
+
+    def get_current_mode(self):
+        return {"mode": self.current_mode}
+
+def main():
+    win_w, win_h = COMPACT
+    x, y = bottom_right_pos(win_w, win_h)
+
+    api = Api()
+
+    window = webview.create_window(
+        APP_TITLE,
+        "web/index.html",
+        width=win_w,
+        height=win_h,
+        x=x,
+        y=y,
+        on_top=True,
+        resizable=True,
+        js_api=api
     )
 
+    api.bind_window(window)
+
+    # Start compact on launch
+    def on_start():
+        api.set_window_mode("compact")
+
+    webview.start(on_start, debug=False)
+
 if __name__ == "__main__":
-    start()
+    main()
