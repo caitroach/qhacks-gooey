@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="/eel.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <main class="shell">
+    <header class="top">
+      <h1>Clippy2.0</h1>
+      <p class="subtitle">Tap the microphone and speak naturally.</p>
+    </header>
+
+    <section class="card" aria-label="Voice input">
+      <button id="micBtn" class="mic" type="button"
+              aria-pressed="false"
+              aria-label="Tap to start listening"
+              onclick="go()">
+        <span class="micIcon" aria-hidden="true">🎙️</span>
+        <span class="micText">Tap to talk!</span>
+      </button>
+
+      <div class="status" id="status" role="status" aria-live="polite">
+        Ready.
+      </div>
+
+      <div class="output" aria-label="Transcript">
+        <div class="outputLabel">I heard:</div>
+        <p id="out" class="outText">...</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function go() {
+      const msg = await eel.hello()();
+      document.getElementById("out").innerText = msg;
+      document.getElementById("status").innerText = "Heard something.";
+    }
+  </script>
+</body>
+</html>
