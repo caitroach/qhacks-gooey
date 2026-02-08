@@ -9,6 +9,7 @@ In particular, with physical disabilities like cerebral palsy and arthritis expe
 Our project for QHacks 2026 is Willow: A simple, user-friendly program that allows the user to control their PC or laptop with conversational verbal commands, such as "show me a funny cat video", "look up a focaccia recipe", or "give me directions to the library". Using Willow, users can easily surf the Internet without touching their keyboard or relying on external assistance. We aim to provide our users with a highly accessible tool to improve their independence and agency.
 
 ## tech stack
+- Eel Python application serving a vanilla HTML/JS/CSS application.
 
 ## ethics & privacy
 Because our audience is made of vulnerable groups of people, privacy and security of our users' data is our highest priority. Willow is run locally on the users' device and can be disabled. No data leaves the computer and we do not collect any user information. In essence, Willow is a voice-activated virtual keyboard - not a companion or agent that would use data for model training.
