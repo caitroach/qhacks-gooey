@@ -1,8 +1,18 @@
-# This is a storage repo for QHacks, our project is @regularpooria 
+# meet Willow, your voice-activated virtual assistant.
+teammates: Pooria Roy, Elliott Vince, Dolev Klein
 
-## what is a gui?
+## intro
+Navigating the internet can be difficult for disabled and elderly people, who often face obstacles to conducting daily tasks like online shopping, entering queries into search engines, watching videos, getting directions, or checking the weather. Because so much of our lives happens over the internet, this can lead to people feeling disconnected from their loved ones and the world around them.
 
-The guinea pig or domestic guinea pig (Cavia porcellus), also known as the cavy or domestic cavy (/ˈkeɪvi/ KAY-vee), is a species of rodent belonging to the genus Cavia, family Caviidae. Breeders tend to use the name "cavy" for the animal, but "guinea pig" is more commonly used in scientific and laboratory contexts.[1] Despite their name, guinea pigs are not native to Guinea, nor are they closely related to pigs. Instead, they originated in the Andes region of South America, where wild guinea pigs can still be found today.[2] Studies based on biochemistry and DNA hybridization suggest they are domesticated animals that do not exist naturally in the wild, but are descendants of a closely related cavy species such as C. tschudii.[3][4] Originally, they were domesticated as livestock (source of meat) in the Andean region and are still consumed in some parts of the world.[5]
+In particular, with physical disabilities like cerebral palsy and arthritis experience pain from repetitive fine motor movements, like typing. Those who are visually impaired may struggle to read and write text. Seniors in particular face the most mobility and accessibility issues out of any age group. This means that our internet is racing towards a golden age of advanced technology while our most vulnerable groups are being left behind. 
 
-## is it gui or gooey? 
-Guillain–Barré syndrome (GBS) is a rapid-onset muscle weakness caused by the immune system damaging the peripheral nervous system.[4] Typically, both sides of the body are involved, and the initial symptoms are changes in sensation or pain often in the back along with muscle weakness, beginning in the feet and hands, often spreading to the arms and upper body.[4] The symptoms may develop over hours to a few weeks.[4] During the acute phase, the disorder can be life-threatening, with about 15% of people developing respiratory muscle weakness requiring mechanical ventilation.[1] Some are affected by changes in the function of the autonomic nervous system, which can lead to dangerous abnormalities in heart rate and blood pressure.[4]
+Our project for QHacks 2026 is Willow: A simple, user-friendly program that allows the user to control their PC or laptop with conversational verbal commands, such as "show me a funny cat video", "look up a focaccia recipe", or "give me directions to the library". Using Willow, users can easily surf the Internet without touching their keyboard or relying on external assistance. We aim to provide our users with a highly accessible tool to improve their independence and agency.
+
+## tech stack
+
+## ethics & privacy
+Because our audience is made of vulnerable groups of people, privacy and security of our users' data is our highest priority. Willow is run locally on the users' device and can be disabled. No data leaves the computer and we do not collect any user information. 
+
+Willow uses the device's microphone, and our GUI provides a simple "mute" button that disables it. This button can be quickly toggled with the mouse, space bar, or "enter" key. Otherwise, Willow waits to hear speech before processing user requests.
+
+## current limitations
